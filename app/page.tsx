@@ -45,7 +45,7 @@ export default function Home() {
             <BookOpen className="h-6 w-6 text-primary" />
             <span>BlogSphere</span>
           </div>
-          <nav className="flex items-center gap-6 text-sm font-medium">
+          <nav className="flex items-center gap-4 text-sm font-medium">
             <Link href="/" className="hover:text-primary transition-colors">
               Home
             </Link>
@@ -55,7 +55,14 @@ export default function Home() {
             <Link href="#about" className="hover:text-primary transition-colors">
               About
             </Link>
-            <Button size="sm">Get Started</Button>
+            <Link href="/login">
+              <Button variant="ghost" size="sm">
+                Sign In
+              </Button>
+            </Link>
+            <Link href="/register">
+              <Button size="sm">Get Started</Button>
+            </Link>
           </nav>
         </div>
       </header>
