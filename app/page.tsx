@@ -1,9 +1,13 @@
+"use client";
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { BookOpen, Calendar, Clock, ArrowRight, Search, Sparkles } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { BookOpen, Calendar, Clock, ArrowRight, Search, Sparkles, LogOut, User as UserIcon } from "lucide-react";
+import { useAuth } from "@/context/auth-context";
 
 const posts = [
   {
@@ -36,6 +40,8 @@ const posts = [
 ];
 
 export default function Home() {
+  const { user, logout, loading } = useAuth();
+
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Header */}
@@ -55,14 +61,42 @@ export default function Home() {
             <Link href="/profile" className="hover:text-primary transition-colors">
               Profile
             </Link>
-            <Link href="/login">
-              <Button variant="ghost" size="sm">
-                Sign In
-              </Button>
-            </Link>
-            <Link href="/register">
-              <Button size="sm">Get Started</Button>
-            </Link>
+
+            {!loading && (
+              <>
+                {user ? (
+                  <div className="flex items-center gap-3">
+                    <Link href="/profile" className="flex items-center gap-2 hover:opacity-80">
+                      <Avatar className="h-8 w-8">
+                        {user.avatar ? (
+                          <AvatarImage src={user.avatar} alt={user.name} />
+                        ) : null}
+                        <AvatarFallback className="text-xs">
+                          {user.name.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="hidden sm:inline-block text-sm font-medium">
+                        {user.name.split(" ")[0]}
+                      </span>
+                    </Link>
+                    <Button variant="ghost" size="sm" onClick={() => logout()} title="Log out">
+                      <LogOut className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <Link href="/login">
+                      <Button variant="ghost" size="sm">
+                        Sign In
+                      </Button>
+                    </Link>
+                    <Link href="/register">
+                      <Button size="sm">Get Started</Button>
+                    </Link>
+                  </>
+                )}
+              </>
+            )}
           </nav>
         </div>
       </header>
@@ -72,13 +106,13 @@ export default function Home() {
         <section className="py-20 px-4 text-center container mx-auto max-w-3xl space-y-6">
           <Badge variant="secondary" className="px-3 py-1 gap-1 inline-flex items-center text-xs">
             <Sparkles className="h-3.5 w-3.5" />
-            Crafted with Next.js & shadcn/ui
+            Fullstack MongoDB & Next.js 14
           </Badge>
           <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight">
             Stories, insights, and ideas for builders.
           </h1>
           <p className="text-lg text-muted-foreground leading-relaxed">
-            Welcome to your new blogging UI. Clean typography, composable UI primitives, and lightning-fast performance out of the box.
+            Welcome to your new blogging platform. Equipped with MongoDB connection, JWT sessions, and production-grade authentication.
           </p>
           <div className="flex max-w-md mx-auto items-center gap-2 pt-4">
             <div className="relative flex-1">
@@ -130,7 +164,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t py-8 text-center text-sm text-muted-foreground">
         <div className="container mx-auto px-4">
-          © {new Date().getFullYear()} BlogSphere. Powered by Next.js & shadcn/ui.
+          © {new Date().getFullYear()} BlogSphere. Powered by Next.js & MongoDB.
         </div>
       </footer>
     </div>

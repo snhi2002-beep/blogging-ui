@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,17 +14,46 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { BookOpen, Github } from "lucide-react";
+import { BookOpen, Github, AlertCircle, Loader2 } from "lucide-react";
+import { useAuth } from "@/context/auth-context";
 
 export default function RegisterPage() {
+  const router = useRouter();
+  const { register } = useAuth();
+
+  const [name, setName] = React.useState("");
+  const [email, setEmail] = React.useState("");
+  const [password, setPassword] = React.useState("");
+  const [confirmPassword, setConfirmPassword] = React.useState("");
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setErrorMessage(null);
+
+    if (password !== confirmPassword) {
+      setErrorMessage("Passwords do not match.");
+      return;
+    }
+
+    if (password.length < 8) {
+      setErrorMessage("Password must be at least 8 characters long.");
+      return;
+    }
+
     setIsLoading(true);
-    setTimeout(() => {
+
+    const result = await register(name, email, password);
+
+    if (!result.ok) {
+      setErrorMessage(result.error || "Failed to create account.");
       setIsLoading(false);
-    }, 1000);
+      return;
+    }
+
+    router.push("/profile");
+    router.refresh();
   };
 
   return (
@@ -46,6 +76,13 @@ export default function RegisterPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {errorMessage && (
+            <div className="mb-4 flex items-center gap-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive border border-destructive/20">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
@@ -53,8 +90,11 @@ export default function RegisterPage() {
                 id="name"
                 type="text"
                 placeholder="John Doe"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 required
                 autoComplete="name"
+                disabled={isLoading}
               />
             </div>
             <div className="space-y-2">
@@ -63,8 +103,11 @@ export default function RegisterPage() {
                 id="email"
                 type="email"
                 placeholder="name@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
+                disabled={isLoading}
               />
             </div>
             <div className="space-y-2">
@@ -73,8 +116,11 @@ export default function RegisterPage() {
                 id="password"
                 type="password"
                 placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 required
                 autoComplete="new-password"
+                disabled={isLoading}
               />
               <p className="text-[11px] text-muted-foreground">
                 Must be at least 8 characters long
@@ -86,12 +132,21 @@ export default function RegisterPage() {
                 id="confirm-password"
                 type="password"
                 placeholder="••••••••"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 required
                 autoComplete="new-password"
+                disabled={isLoading}
               />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Creating account..." : "Sign up with Email"}
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating account...
+                </>
+              ) : (
+                "Sign up with Email"
+              )}
             </Button>
           </form>
 
@@ -107,11 +162,11 @@ export default function RegisterPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <Button variant="outline" className="w-full gap-2" type="button">
+            <Button variant="outline" className="w-full gap-2" type="button" disabled={isLoading}>
               <Github className="h-4 w-4" />
               GitHub
             </Button>
-            <Button variant="outline" className="w-full gap-2" type="button">
+            <Button variant="outline" className="w-full gap-2" type="button" disabled={isLoading}>
               <svg className="h-4 w-4" viewBox="0 0 24 24">
                 <path
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"

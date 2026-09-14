@@ -28,87 +28,74 @@ import {
   PenSquare,
   Check,
   Plus,
+  LogOut,
 } from "lucide-react";
-
-const author = {
-  name: "Jane Doe",
-  username: "janedoe",
-  role: "Senior Frontend Engineer & Tech Writer",
-  bio: "Writing about modern frontend architecture, TypeScript, React ecosystem, and design systems. Building the future of the open web.",
-  location: "San Francisco, CA",
-  website: "https://janedoe.dev",
-  joined: "March 2024",
-  stats: {
-    articles: 28,
-    reads: "142.5K",
-    followers: 4820,
-    following: 312,
-  },
-  skills: [
-    "Next.js",
-    "React",
-    "TypeScript",
-    "Tailwind CSS",
-    "UI/UX Design",
-    "Web Performance",
-    "GraphQL",
-  ],
-};
-
-const userArticles = [
-  {
-    id: 1,
-    title: "Building Modern Web Apps with Next.js 14 & shadcn/ui",
-    description:
-      "A deep dive into server components, streaming architecture, and composable UI primitives for enterprise scale.",
-    date: "Sep 14, 2026",
-    readTime: "5 min read",
-    tag: "Next.js",
-    likes: 342,
-    comments: 48,
-    featured: true,
-  },
-  {
-    id: 2,
-    title: "Mastering Tailwind CSS and Design Systems",
-    description:
-      "How to structure accessible, themeable, and scalable CSS variable systems without polluting component logic.",
-    date: "Sep 10, 2026",
-    readTime: "8 min read",
-    tag: "Tailwind CSS",
-    likes: 219,
-    comments: 26,
-    featured: false,
-  },
-  {
-    id: 3,
-    title: "Understanding React Server Components Under the Hood",
-    description:
-      "Demystifying React Flight protocol, client boundaries, and how bundle size is drastically reduced.",
-    date: "Aug 28, 2026",
-    readTime: "10 min read",
-    tag: "React",
-    likes: 512,
-    comments: 63,
-    featured: false,
-  },
-  {
-    id: 4,
-    title: "Micro-frontends in 2026: Real-World Lessons",
-    description:
-      "When to adopt module federation versus monorepos, trade-offs in CI/CD pipelines, and developer experience.",
-    date: "Aug 15, 2026",
-    readTime: "7 min read",
-    tag: "Architecture",
-    likes: 189,
-    comments: 19,
-    featured: false,
-  },
-];
+import { useAuth } from "@/context/auth-context";
 
 export default function ProfilePage() {
+  const { user, logout, loading } = useAuth();
   const [activeTab, setActiveTab] = React.useState<"articles" | "about" | "saved">("articles");
   const [isFollowing, setIsFollowing] = React.useState(false);
+
+  const displayName = user ? user.name : "Jane Doe";
+  const displayEmail = user ? user.email : "jane@example.com";
+  const displayBio =
+    user?.bio ||
+    "Writing about modern frontend architecture, TypeScript, React ecosystem, and design systems. Building the future of the open web.";
+  const displayAvatar =
+    user?.avatar ||
+    "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=256&h=256&q=80&fit=crop";
+
+  const userArticles = [
+    {
+      id: 1,
+      title: "Building Modern Web Apps with Next.js 14 & shadcn/ui",
+      description:
+        "A deep dive into server components, streaming architecture, and composable UI primitives for enterprise scale.",
+      date: "Sep 14, 2026",
+      readTime: "5 min read",
+      tag: "Next.js",
+      likes: 342,
+      comments: 48,
+      featured: true,
+    },
+    {
+      id: 2,
+      title: "Mastering Tailwind CSS and Design Systems",
+      description:
+        "How to structure accessible, themeable, and scalable CSS variable systems without polluting component logic.",
+      date: "Sep 10, 2026",
+      readTime: "8 min read",
+      tag: "Tailwind CSS",
+      likes: 219,
+      comments: 26,
+      featured: false,
+    },
+    {
+      id: 3,
+      title: "Understanding React Server Components Under the Hood",
+      description:
+        "Demystifying React Flight protocol, client boundaries, and how bundle size is drastically reduced.",
+      date: "Aug 28, 2026",
+      readTime: "10 min read",
+      tag: "React",
+      likes: 512,
+      comments: 63,
+      featured: false,
+    },
+    {
+      id: 4,
+      title: "Micro-frontends in 2026: Real-World Lessons",
+      description:
+        "When to adopt module federation versus monorepos, trade-offs in CI/CD pipelines, and developer experience.",
+      date: "Aug 15, 2026",
+      readTime: "7 min read",
+      tag: "Architecture",
+      likes: 189,
+      comments: 19,
+      featured: false,
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
@@ -126,14 +113,26 @@ export default function ProfilePage() {
             <Link href="/profile" className="text-primary font-semibold">
               Profile
             </Link>
-            <Link href="/login">
-              <Button variant="ghost" size="sm">
-                Sign In
-              </Button>
-            </Link>
-            <Link href="/register">
-              <Button size="sm">Get Started</Button>
-            </Link>
+            {!loading && (
+              <>
+                {user ? (
+                  <Button variant="ghost" size="sm" onClick={() => logout()} className="gap-1.5">
+                    <LogOut className="h-4 w-4" /> Logout
+                  </Button>
+                ) : (
+                  <>
+                    <Link href="/login">
+                      <Button variant="ghost" size="sm">
+                        Sign In
+                      </Button>
+                    </Link>
+                    <Link href="/register">
+                      <Button size="sm">Get Started</Button>
+                    </Link>
+                  </>
+                )}
+              </>
+            )}
           </nav>
         </div>
       </header>
@@ -151,26 +150,24 @@ export default function ProfilePage() {
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pb-6 border-b">
               <div className="flex flex-col sm:flex-row items-start sm:items-end gap-5">
                 <Avatar className="h-28 w-28 sm:h-32 sm:w-32 border-4 border-card shadow-md">
-                  <AvatarImage
-                    src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=256&h=256&q=80&fit=crop"
-                    alt={author.name}
-                  />
+                  <AvatarImage src={displayAvatar} alt={displayName} />
                   <AvatarFallback className="text-2xl font-bold bg-primary text-primary-foreground">
-                    JD
+                    {displayName.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
 
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-                      {author.name}
+                      {displayName}
                     </h1>
                     <Badge variant="secondary" className="gap-1 text-xs">
-                      <Sparkles className="h-3 w-3 text-amber-500" /> Pro Writer
+                      <Sparkles className="h-3 w-3 text-amber-500" />{" "}
+                      {user ? user.role.toUpperCase() : "PRO WRITER"}
                     </Badge>
                   </div>
                   <p className="text-sm font-medium text-muted-foreground">
-                    @{author.username} · {author.role}
+                    {displayEmail}
                   </p>
                 </div>
               </div>
@@ -204,50 +201,37 @@ export default function ProfilePage() {
             {/* Bio & Meta Info */}
             <div className="pt-6 space-y-4">
               <p className="text-sm sm:text-base text-foreground/90 max-w-3xl leading-relaxed">
-                {author.bio}
+                {displayBio}
               </p>
 
               <div className="flex flex-wrap items-center gap-y-2 gap-x-6 text-xs sm:text-sm text-muted-foreground">
                 <span className="flex items-center gap-1.5">
-                  <MapPin className="h-4 w-4" /> {author.location}
+                  <MapPin className="h-4 w-4" /> San Francisco, CA
                 </span>
-                <a
-                  href={author.website}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-1.5 hover:text-primary transition-colors"
-                >
-                  <Globe className="h-4 w-4" /> {author.website.replace("https://", "")}
-                </a>
                 <span className="flex items-center gap-1.5">
-                  <Calendar className="h-4 w-4" /> Joined {author.joined}
+                  <Globe className="h-4 w-4" /> blogosphere.dev
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Calendar className="h-4 w-4" /> Active Member
                 </span>
               </div>
 
               {/* Stats Bar */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4">
                 <div className="p-3 bg-muted/50 rounded-lg text-center">
-                  <div className="text-xl font-bold tracking-tight">
-                    {author.stats.articles}
-                  </div>
+                  <div className="text-xl font-bold tracking-tight">28</div>
                   <div className="text-xs text-muted-foreground">Articles Published</div>
                 </div>
                 <div className="p-3 bg-muted/50 rounded-lg text-center">
-                  <div className="text-xl font-bold tracking-tight">
-                    {author.stats.reads}
-                  </div>
+                  <div className="text-xl font-bold tracking-tight">142.5K</div>
                   <div className="text-xs text-muted-foreground">Total Views</div>
                 </div>
                 <div className="p-3 bg-muted/50 rounded-lg text-center">
-                  <div className="text-xl font-bold tracking-tight">
-                    {author.stats.followers.toLocaleString()}
-                  </div>
+                  <div className="text-xl font-bold tracking-tight">4,820</div>
                   <div className="text-xs text-muted-foreground">Followers</div>
                 </div>
                 <div className="p-3 bg-muted/50 rounded-lg text-center">
-                  <div className="text-xl font-bold tracking-tight">
-                    {author.stats.following}
-                  </div>
+                  <div className="text-xl font-bold tracking-tight">312</div>
                   <div className="text-xs text-muted-foreground">Following</div>
                 </div>
               </div>
@@ -344,10 +328,7 @@ export default function ProfilePage() {
                 </CardHeader>
                 <CardContent className="space-y-4 text-sm text-muted-foreground leading-relaxed">
                   <p>
-                    Jane is a software architect with over a decade of experience designing and shipping high-performance web applications. She specializes in full-stack JavaScript/TypeScript architecture, distributed component libraries, and frontend performance optimization.
-                  </p>
-                  <p>
-                    When she isn&apos;t writing code or technical guides, you can find her contributing to open-source developer tooling, speaking at conferences, or mentoring budding software engineers.
+                    Software architect designing and shipping high-performance web applications. Specializing in full-stack JavaScript/TypeScript architecture, distributed component libraries, and database optimization.
                   </p>
                 </CardContent>
               </Card>
@@ -361,11 +342,13 @@ export default function ProfilePage() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-2">
-                    {author.skills.map((skill) => (
-                      <Badge key={skill} variant="secondary" className="px-3 py-1">
-                        {skill}
-                      </Badge>
-                    ))}
+                    {["Next.js", "MongoDB", "TypeScript", "Tailwind CSS", "React", "Authentication"].map(
+                      (skill) => (
+                        <Badge key={skill} variant="secondary" className="px-3 py-1">
+                          {skill}
+                        </Badge>
+                      )
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -387,7 +370,7 @@ export default function ProfilePage() {
       {/* Footer */}
       <footer className="border-t py-8 text-center text-sm text-muted-foreground">
         <div className="container mx-auto px-4">
-          © {new Date().getFullYear()} BlogSphere. Powered by Next.js & shadcn/ui.
+          © {new Date().getFullYear()} BlogSphere. Powered by Next.js & MongoDB.
         </div>
       </footer>
     </div>
