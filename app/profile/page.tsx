@@ -21,81 +21,94 @@ import {
   MapPin,
   Share2,
   Heart,
-  MessageSquare,
   Bookmark,
   Sparkles,
-  Award,
   PenSquare,
-  Check,
-  Plus,
   LogOut,
+  Trash2,
+  Loader2,
 } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 
-export default function ProfilePage() {
-  const { user, logout, loading } = useAuth();
-  const [activeTab, setActiveTab] = React.useState<"articles" | "about" | "saved">("articles");
-  const [isFollowing, setIsFollowing] = React.useState(false);
+interface Author {
+  _id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  role?: string;
+}
 
-  const displayName = user ? user.name : "Jane Doe";
-  const displayEmail = user ? user.email : "jane@example.com";
+interface Post {
+  _id: string;
+  title: string;
+  slug: string;
+  description: string;
+  tag: string;
+  readTime: string;
+  createdAt: string;
+  likes: string[];
+  author: Author;
+}
+
+export default function ProfilePage() {
+  const { user, logout, loading: authLoading } = useAuth();
+  const [activeTab, setActiveTab] = React.useState<"articles" | "about" | "saved">("articles");
+  const [userPosts, setUserPosts] = React.useState<Post[]>([]);
+  const [loadingPosts, setLoadingPosts] = React.useState(true);
+
+  const displayName = user ? user.name : "Guest Author";
+  const displayEmail = user ? user.email : "guest@example.com";
   const displayBio =
     user?.bio ||
-    "Writing about modern frontend architecture, TypeScript, React ecosystem, and design systems. Building the future of the open web.";
+    "Writer and developer publishing stories on architecture, frontend frameworks, and fullstack applications.";
   const displayAvatar =
     user?.avatar ||
-    "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=256&h=256&q=80&fit=crop";
+    `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayName)}`;
 
-  const userArticles = [
-    {
-      id: 1,
-      title: "Building Modern Web Apps with Next.js 14 & shadcn/ui",
-      description:
-        "A deep dive into server components, streaming architecture, and composable UI primitives for enterprise scale.",
-      date: "Sep 14, 2026",
-      readTime: "5 min read",
-      tag: "Next.js",
-      likes: 342,
-      comments: 48,
-      featured: true,
-    },
-    {
-      id: 2,
-      title: "Mastering Tailwind CSS and Design Systems",
-      description:
-        "How to structure accessible, themeable, and scalable CSS variable systems without polluting component logic.",
-      date: "Sep 10, 2026",
-      readTime: "8 min read",
-      tag: "Tailwind CSS",
-      likes: 219,
-      comments: 26,
-      featured: false,
-    },
-    {
-      id: 3,
-      title: "Understanding React Server Components Under the Hood",
-      description:
-        "Demystifying React Flight protocol, client boundaries, and how bundle size is drastically reduced.",
-      date: "Aug 28, 2026",
-      readTime: "10 min read",
-      tag: "React",
-      likes: 512,
-      comments: 63,
-      featured: false,
-    },
-    {
-      id: 4,
-      title: "Micro-frontends in 2026: Real-World Lessons",
-      description:
-        "When to adopt module federation versus monorepos, trade-offs in CI/CD pipelines, and developer experience.",
-      date: "Aug 15, 2026",
-      readTime: "7 min read",
-      tag: "Architecture",
-      likes: 189,
-      comments: 19,
-      featured: false,
-    },
-  ];
+  const fetchUserPosts = React.useCallback(async (authorId: string) => {
+    try {
+      setLoadingPosts(true);
+      const res = await fetch(`/api/posts?author=${authorId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setUserPosts(data.posts || []);
+      }
+    } catch (err) {
+      console.error("Failed to load user posts:", err);
+    } finally {
+      setLoadingPosts(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (user?.id) {
+      fetchUserPosts(user.id);
+    } else {
+      setLoadingPosts(false);
+    }
+  }, [user, fetchUserPosts]);
+
+  const handleDeletePost = async (slug: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!confirm("Are you sure you want to delete this post?")) return;
+
+    try {
+      const res = await fetch(`/api/posts/${slug}`, { method: "DELETE" });
+      if (res.ok) {
+        setUserPosts((prev) => prev.filter((p) => p.slug !== slug));
+      } else {
+        alert("Failed to delete post");
+      }
+    } catch {
+      alert("Error deleting post");
+    }
+  };
+
+  const totalLikes = React.useMemo(() => {
+    return userPosts.reduce((acc, curr) => acc + (curr.likes?.length || 0), 0);
+  }, [userPosts]);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
@@ -113,23 +126,21 @@ export default function ProfilePage() {
             <Link href="/profile" className="text-primary font-semibold">
               Profile
             </Link>
-            {!loading && (
+            <Link href="/write">
+              <Button size="sm" className="gap-1.5 hidden sm:inline-flex">
+                <PenSquare className="h-4 w-4" /> Write
+              </Button>
+            </Link>
+            {!authLoading && (
               <>
                 {user ? (
                   <Button variant="ghost" size="sm" onClick={() => logout()} className="gap-1.5">
                     <LogOut className="h-4 w-4" /> Logout
                   </Button>
                 ) : (
-                  <>
-                    <Link href="/login">
-                      <Button variant="ghost" size="sm">
-                        Sign In
-                      </Button>
-                    </Link>
-                    <Link href="/register">
-                      <Button size="sm">Get Started</Button>
-                    </Link>
-                  </>
+                  <Link href="/login">
+                    <Button size="sm">Sign In</Button>
+                  </Link>
                 )}
               </>
             )}
@@ -163,7 +174,7 @@ export default function ProfilePage() {
                     </h1>
                     <Badge variant="secondary" className="gap-1 text-xs">
                       <Sparkles className="h-3 w-3 text-amber-500" />{" "}
-                      {user ? user.role.toUpperCase() : "PRO WRITER"}
+                      {user ? user.role.toUpperCase() : "AUTHOR"}
                     </Badge>
                   </div>
                   <p className="text-sm font-medium text-muted-foreground">
@@ -174,26 +185,13 @@ export default function ProfilePage() {
 
               {/* Actions */}
               <div className="flex items-center gap-2.5 self-start sm:self-auto">
-                <Button
-                  variant={isFollowing ? "outline" : "default"}
-                  className="gap-1.5"
-                  onClick={() => setIsFollowing(!isFollowing)}
-                >
-                  {isFollowing ? (
-                    <>
-                      <Check className="h-4 w-4" /> Following
-                    </>
-                  ) : (
-                    <>
-                      <Plus className="h-4 w-4" /> Follow
-                    </>
-                  )}
-                </Button>
+                <Link href="/write">
+                  <Button className="gap-1.5">
+                    <PenSquare className="h-4 w-4" /> New Article
+                  </Button>
+                </Link>
                 <Button variant="outline" size="icon" title="Share Profile">
                   <Share2 className="h-4 w-4" />
-                </Button>
-                <Button variant="outline" className="gap-1.5 hidden sm:inline-flex">
-                  <PenSquare className="h-4 w-4" /> Write Post
                 </Button>
               </div>
             </div>
@@ -206,33 +204,35 @@ export default function ProfilePage() {
 
               <div className="flex flex-wrap items-center gap-y-2 gap-x-6 text-xs sm:text-sm text-muted-foreground">
                 <span className="flex items-center gap-1.5">
-                  <MapPin className="h-4 w-4" /> San Francisco, CA
+                  <MapPin className="h-4 w-4" /> Global Author
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <Globe className="h-4 w-4" /> blogosphere.dev
+                  <Globe className="h-4 w-4" /> blogsphere.dev
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <Calendar className="h-4 w-4" /> Active Member
+                  <Calendar className="h-4 w-4" /> Connected with MongoDB
                 </span>
               </div>
 
               {/* Stats Bar */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-4">
                 <div className="p-3 bg-muted/50 rounded-lg text-center">
-                  <div className="text-xl font-bold tracking-tight">28</div>
-                  <div className="text-xs text-muted-foreground">Articles Published</div>
+                  <div className="text-xl font-bold tracking-tight">
+                    {userPosts.length}
+                  </div>
+                  <div className="text-xs text-muted-foreground">Published Articles</div>
                 </div>
                 <div className="p-3 bg-muted/50 rounded-lg text-center">
-                  <div className="text-xl font-bold tracking-tight">142.5K</div>
-                  <div className="text-xs text-muted-foreground">Total Views</div>
+                  <div className="text-xl font-bold tracking-tight">
+                    {totalLikes}
+                  </div>
+                  <div className="text-xs text-muted-foreground">Total Likes Received</div>
                 </div>
                 <div className="p-3 bg-muted/50 rounded-lg text-center">
-                  <div className="text-xl font-bold tracking-tight">4,820</div>
-                  <div className="text-xs text-muted-foreground">Followers</div>
-                </div>
-                <div className="p-3 bg-muted/50 rounded-lg text-center">
-                  <div className="text-xl font-bold tracking-tight">312</div>
-                  <div className="text-xs text-muted-foreground">Following</div>
+                  <div className="text-xl font-bold tracking-tight">
+                    {user ? "Active" : "Guest"}
+                  </div>
+                  <div className="text-xs text-muted-foreground">Account Status</div>
                 </div>
               </div>
             </div>
@@ -248,7 +248,7 @@ export default function ProfilePage() {
                   : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
-              Articles ({userArticles.length})
+              My Articles ({userPosts.length})
             </button>
             <button
               onClick={() => setActiveTab("about")}
@@ -274,49 +274,76 @@ export default function ProfilePage() {
 
           {/* Tab Contents */}
           {activeTab === "articles" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {userArticles.map((article) => (
-                <Card
-                  key={article.id}
-                  className="flex flex-col justify-between hover:shadow-md transition-shadow"
-                >
-                  <CardHeader>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline">{article.tag}</Badge>
-                        {article.featured && (
-                          <Badge variant="secondary" className="gap-1 text-[11px]">
-                            <Award className="h-3 w-3" /> Featured
-                          </Badge>
-                        )}
-                      </div>
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Clock className="h-3 w-3" /> {article.readTime}
-                      </span>
-                    </div>
-                    <CardTitle className="text-xl leading-snug">
-                      {article.title}
-                    </CardTitle>
-                    <CardDescription className="line-clamp-2">
-                      {article.description}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardFooter className="flex items-center justify-between pt-0 text-xs text-muted-foreground border-t mt-4 p-4">
-                    <span>{article.date}</span>
-                    <div className="flex items-center gap-4">
-                      <span className="flex items-center gap-1 hover:text-destructive cursor-pointer transition-colors">
-                        <Heart className="h-3.5 w-3.5" /> {article.likes}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <MessageSquare className="h-3.5 w-3.5" /> {article.comments}
-                      </span>
-                      <span className="hover:text-primary cursor-pointer transition-colors">
-                        <Bookmark className="h-3.5 w-3.5" />
-                      </span>
-                    </div>
-                  </CardFooter>
-                </Card>
-              ))}
+            <div>
+              {loadingPosts ? (
+                <div className="py-12 flex justify-center items-center gap-2 text-muted-foreground">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  <span>Loading articles...</span>
+                </div>
+              ) : userPosts.length === 0 ? (
+                <div className="text-center py-16 border rounded-xl bg-card space-y-4">
+                  <BookOpen className="h-10 w-10 text-muted-foreground mx-auto" />
+                  <h3 className="text-lg font-semibold">No articles published yet</h3>
+                  <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                    Share your ideas, code tutorials, and design tips with readers around the world.
+                  </p>
+                  <Link href="/write">
+                    <Button className="gap-2">
+                      <PenSquare className="h-4 w-4" /> Write an Article
+                    </Button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {userPosts.map((article) => (
+                    <Link
+                      key={article._id}
+                      href={`/posts/${article.slug}`}
+                      className="block group"
+                    >
+                      <Card className="flex flex-col h-full justify-between hover:shadow-md transition-shadow group-hover:border-primary/50">
+                        <CardHeader>
+                          <div className="flex items-center justify-between mb-2">
+                            <Badge variant="outline">{article.tag}</Badge>
+                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Clock className="h-3 w-3" /> {article.readTime}
+                            </span>
+                          </div>
+                          <CardTitle className="text-xl leading-snug group-hover:text-primary transition-colors">
+                            {article.title}
+                          </CardTitle>
+                          <CardDescription className="line-clamp-2">
+                            {article.description}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardFooter className="flex items-center justify-between pt-0 text-xs text-muted-foreground border-t mt-4 p-4">
+                          <span>
+                            {new Date(article.createdAt).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                          </span>
+                          <div className="flex items-center gap-4">
+                            <span className="flex items-center gap-1">
+                              <Heart className="h-3.5 w-3.5" /> {article.likes?.length || 0}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-destructive hover:bg-destructive/10"
+                              onClick={(e) => handleDeletePost(article.slug, e)}
+                              title="Delete post"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </CardFooter>
+                      </Card>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -327,22 +354,20 @@ export default function ProfilePage() {
                   <CardTitle className="text-lg">Author Background</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 text-sm text-muted-foreground leading-relaxed">
-                  <p>
-                    Software architect designing and shipping high-performance web applications. Specializing in full-stack JavaScript/TypeScript architecture, distributed component libraries, and database optimization.
-                  </p>
+                  <p>{displayBio}</p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Top Topics & Skills</CardTitle>
+                  <CardTitle className="text-lg">Specialties</CardTitle>
                   <CardDescription>
-                    Areas of expertise and subjects regularly covered
+                    Core technologies used across your stories
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-2">
-                    {["Next.js", "MongoDB", "TypeScript", "Tailwind CSS", "React", "Authentication"].map(
+                    {["Next.js", "MongoDB", "TypeScript", "Tailwind CSS", "React", "Node.js"].map(
                       (skill) => (
                         <Badge key={skill} variant="secondary" className="px-3 py-1">
                           {skill}

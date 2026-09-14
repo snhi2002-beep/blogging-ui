@@ -5,26 +5,29 @@ A fullstack blogging platform built with **Next.js 14**, **MongoDB (Mongoose)**,
 ## Features
 
 - ⚡ **Next.js 14 App Router** with TypeScript
-- 🍃 **MongoDB & Mongoose**: Database connection pooling with cached connection in `lib/mongodb.ts`
+- 🍃 **MongoDB & Mongoose**:
+  - Pooled database connection cached in `lib/mongodb.ts`
+  - `User` schema for authors, authentication, and roles
+  - `Post` schema with automated slug generation, reading time calculation, categories, tags, and like counters
+- ✍️ **Full Blogging Engine**:
+  - **Create Post (`/write`)**: Rich composition form with tag presets, custom excerpts, cover images, word counting, and reading time estimation.
+  - **Article Reading View (`/posts/[slug]`)**: Full typography layout, author card, like toggle counter, and deletion controls for the author.
+  - **Dynamic Feed (`/`)**: Real-time keyword search and category filtering directly hitting MongoDB queries.
+  - **Author Dashboard (`/profile`)**: Live list of authored articles, dynamic like count aggregations, and quick deletion.
 - 🔐 **Production-Level Authentication**:
-  - Secure password hashing using `bcryptjs` (salt rounds: 12)
-  - HTTP-only, secure, same-site JWT cookies via `jose`
-  - Route protection and auth state redirection with Edge `middleware.ts`
-  - Auth REST API endpoints (`/api/auth/register`, `/api/auth/login`, `/api/auth/logout`, `/api/auth/me`)
-  - Client-side `useAuth()` hook and `AuthProvider`
-- 🎨 **shadcn/ui**: Modern component primitives (`Button`, `Card`, `Badge`, `Input`, `Label`, `Avatar`, `Separator`)
-- 📱 **Responsive UI**: Hero section, article feeds, responsive login/register cards, and full author profile page
+  - Password hashing via `bcryptjs` (12 salt rounds)
+  - HTTP-only JWT session cookies with `jose`
+  - Edge middleware protecting routes like `/write`
+  - Auth REST API (`/api/auth/register`, `/api/auth/login`, `/api/auth/logout`, `/api/auth/me`)
+- 🎨 **shadcn/ui**: Button, Card, Badge, Input, Label, Textarea, Avatar, Separator primitives
 
-## Environment Setup
+## Environment Variables
 
-Create a `.env.local` file in the root directory (see `.env.example`):
+Configure `.env.local` (see `.env.example`):
 
 ```env
-# MongoDB Connection URI (required)
 MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/blogging_db?retryWrites=true&w=majority
-
-# JWT Secret Key (required)
-JWT_SECRET=your_production_grade_random_secret_string_here_32_chars_min
+JWT_SECRET=your_32_character_minimum_random_secret_string
 ```
 
 ## Getting Started
