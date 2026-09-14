@@ -117,8 +117,11 @@ export default function Home() {
   }, []);
 
   React.useEffect(() => {
-    fetchPosts(searchQuery, selectedTag);
-  }, [fetchPosts, selectedTag]);
+    const timer = setTimeout(() => {
+      fetchPosts(searchQuery, selectedTag);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [fetchPosts, selectedTag, searchQuery]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();

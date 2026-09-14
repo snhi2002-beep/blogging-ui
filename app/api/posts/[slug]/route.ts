@@ -1,6 +1,9 @@
+export const dynamic = "force-dynamic";
+
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import Post from "@/models/Post";
+import User from "@/models/User";
 import { verifyToken, AUTH_COOKIE_NAME } from "@/lib/auth";
 import { calculateReadTime } from "@/lib/posts";
 import mongoose from "mongoose";

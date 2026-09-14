@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label";
 import { BookOpen, Github, AlertCircle, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const from = searchParams.get("from") || "/profile";
@@ -168,5 +168,19 @@ export default function LoginPage() {
         </CardFooter>
       </Card>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      }
+    >
+      <LoginForm />
+    </React.Suspense>
   );
 }
